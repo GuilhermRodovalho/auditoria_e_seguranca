@@ -1,0 +1,27 @@
+# Compiled binary files
+/target/
+
+# Generated documentation
+/doc/
+
+# Dependency directories
+Cargo.lock
+Cargo.toml.orig
+Cargo.toml.bk
+
+# Editor/IDE specific files
+.idea/
+.vscode/
+
+# Environment configuration
+.env
+
+# Build artifacts
+*.rs.bk
+
+# Logs
+*.log
+
+# OS-specific files
+.DS_Store
+Thumbs.db
