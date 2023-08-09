@@ -10,120 +10,61 @@ const LOWERCASE_ALPHABET: [char; 26] = [
 
 const NUMBERS: [char; 10] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
+/// Checks if a string contains only ASCII alphabetic characters.
 pub fn is_clean(text: &str) -> bool {
     !text.chars().any(|c| !c.is_ascii_alphabetic())
 }
 
+/// Generates a repeated key to match the length of the input text.
 pub fn repeat_key(text: &str, key: &str) -> String {
-    if key.len() > text.len() {
-        return key.to_string();
-    }
     key.chars().cycle().take(text.len()).collect()
 }
 
+/// Adds a character to the alphabet after shifting it by an amount determined by the key.
+/// The key must contain only alphabetic characters.
 pub fn add_char(c: char, key: char) -> char {
-    let c_pos = UPPERCASE_ALPHABET.iter().position(|&x| x == c);
-    let k_pos = UPPERCASE_ALPHABET
+    let mut k_pos = UPPERCASE_ALPHABET
         .iter()
         .position(|&k| k == key.to_ascii_uppercase())
         .expect("Key contains non alphabetic characters");
 
-    if let Some(c_pos) = c_pos {
-        return *UPPERCASE_ALPHABET.get((k_pos + c_pos + 1) % 26).unwrap();
-    }
-    let c_pos = LOWERCASE_ALPHABET.iter().position(|&x| x == c);
+    // The key is 0-indexed but the alphabet is 1-indexed
+    k_pos += 1;
 
-    if let Some(c_pos) = c_pos {
-        return *LOWERCASE_ALPHABET.get((k_pos + c_pos + 1) % 26).unwrap();
-    }
-
-    let c_pos = NUMBERS.iter().position(|&x| x == c);
-
-    match c_pos {
-        Some(c_pos) => *NUMBERS.get((k_pos + c_pos + 1) % 26).unwrap(),
-        None => c,
-    }
+    shift_char(c, |pos| pos + k_pos)
 }
 
-pub fn add_char_with_shift(c: char, shift: usize) -> char {
-    let mut c_pos = NUMBERS.iter().position(|&x| x == c);
-
-    if c_pos.is_none() {
-        c_pos = UPPERCASE_ALPHABET
-            .iter()
-            .position(|&x| x == c.to_uppercase().next().unwrap());
-    }
-
-    match c_pos {
-        Some(c_pos) => {
-            let new_position = c_pos + shift;
-
-            if c.is_numeric() {
-                NUMBERS[new_position % 10]
-            } else if c.is_uppercase() {
-                UPPERCASE_ALPHABET[new_position % 26]
-            } else {
-                LOWERCASE_ALPHABET[new_position % 26]
-            }
-        }
-        None => c,
-    }
-}
-
-pub fn subtract_char_with_shift<F>(c: char, get_index: F) -> char
+/// Shifts a character across the alphabet using a custom index function.
+pub fn shift_char<F>(c: char, get_index: F) -> char
 where
     F: Fn(usize) -> usize,
 {
-    let mut c_pos = NUMBERS.iter().position(|&x| x == c);
-
-    if c_pos.is_none() {
-        c_pos = UPPERCASE_ALPHABET
-            .iter()
-            .position(|&x| x == c.to_uppercase().next().unwrap());
-    }
+    let c_pos = get_position(c, &UPPERCASE_ALPHABET)
+        .or_else(|| get_position(c, &LOWERCASE_ALPHABET))
+        .or_else(|| get_position(c, &NUMBERS));
 
     match c_pos {
         Some(c_pos) => {
-            let new_position = get_index(c_pos);
+            let new_position = get_index(c_pos) as i32;
 
             if c.is_numeric() {
-                NUMBERS[modulo(new_position as i32, 10 as i32) as usize]
+                NUMBERS[modulo(new_position, 10) as usize]
             } else if c.is_uppercase() {
-                UPPERCASE_ALPHABET[modulo(new_position as i32, 26 as i32) as usize]
+                UPPERCASE_ALPHABET[modulo(new_position, 26) as usize]
             } else {
-                LOWERCASE_ALPHABET[modulo(new_position as i32, 26 as i32) as usize]
+                LOWERCASE_ALPHABET[modulo(new_position, 26) as usize]
             }
         }
         None => c,
     }
 }
-// {
-//     let mut c_pos = NUMBERS.iter().position(|&x| x == c);
 
-//     if c_pos.is_none() {
-//         c_pos = UPPERCASE_ALPHABET
-//             .iter()
-//             .position(|&x| x == c.to_uppercase().next().unwrap());
-//     }
+/// Returns the position of a character in a specific alphabet.
+fn get_position(c: char, alphabet: &[char]) -> Option<usize> {
+    alphabet.iter().position(|&x| x == c)
+}
 
-//     match c_pos {
-//         Some(c_pos) => {
-//             let new_position = c_pos - shift;
-
-//             if c.is_numeric() {
-//                 NUMBERS[modulo(new_position as i32, 10 as i32) as usize]
-//             } else if c.is_uppercase() {
-//                 UPPERCASE_ALPHABET[modulo(new_position as i32, 26 as i32) as usize]
-//             } else {
-//                 LOWERCASE_ALPHABET[modulo(new_position as i32, 26 as i32) as usize]
-//             }
-//         }
-//         None => c,
-//     }
-// }
-
-// Function that calculates the modulo of a number
-// works with negative numbers
+/// Calculates the modulo of a number, including support for negative numbers.
 fn modulo(n: i32, m: i32) -> i32 {
     ((n % m) + m) % m
 }
@@ -158,5 +99,28 @@ mod test {
         assert_eq!(add_char('a', 'Z'), 'a');
         assert_eq!(add_char('1', 'a'), '2');
         assert_eq!(add_char(' ', 'g'), ' ');
+        assert_eq!(add_char('A', 'A'), 'B');
+        assert_eq!(add_char('T', 'c'), 'W');
+    }
+
+    #[test]
+    fn test_modulo() {
+        assert_eq!(modulo(5, 3), 2);
+        assert_eq!(modulo(-5, 3), 1);
+        assert_eq!(modulo(5, -3), -1);
+        assert_eq!(modulo(-5, -3), -2);
+    }
+
+    #[test]
+    fn test_shift_char() {
+        assert_eq!(shift_char('a', |x| x + 1), 'b');
+        assert_eq!(shift_char('a', |x| x + 2), 'c');
+
+        assert_eq!(shift_char('z', |x| x + 1), 'a');
+        assert_eq!(shift_char('z', |x| x + 2), 'b');
+
+        assert_eq!(shift_char('A', |x| x + 1), 'B');
+
+        assert_eq!(shift_char('Z', |x| x + 1), 'A');
     }
 }

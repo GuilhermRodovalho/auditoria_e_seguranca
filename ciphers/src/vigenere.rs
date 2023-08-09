@@ -1,4 +1,5 @@
-use crate::utils::{is_clean, repeat_key, Cipher};
+use crate::utils::alphabet::{add_char, is_clean, repeat_key};
+use crate::utils::cipher::Cipher;
 
 struct Vigenere {
     key: String,
@@ -9,7 +10,7 @@ impl Cipher for Vigenere {
 
     fn new(key: Self::KeyType) -> Self {
         if !is_clean(&key) {
-            panic!("The key should not contains special characters and must be all alphabetic")
+            panic!("The key must not contains special characters and must be all alphabetic")
         }
 
         Vigenere { key }
@@ -18,12 +19,27 @@ impl Cipher for Vigenere {
     fn encrypt(&self, text: &str) -> String {
         let repeated_key = repeat_key(&text, &self.key);
         let mut cipher_text = String::new();
-        for c in text.chars() {
-            cipher_text.push()
+        for (c, k) in text.chars().zip(repeated_key.chars()) {
+            cipher_text.push(add_char(c, k));
         }
+        cipher_text
     }
 
     fn decrypt(&self, text: &str) -> String {
         todo!()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_vigenere_cipher_encrypt() {
+        assert_eq!(
+            "Wzn wjoe ex hkw cidqmtyfx".to_string(),
+            Vigenere::new("cripticsspren".to_string()).encrypt("THECALLOFTHEMOUNTAINS")
+        );
+        // generate other tests
     }
 }

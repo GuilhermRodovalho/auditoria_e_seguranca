@@ -1,7 +1,4 @@
-use crate::utils::{
-    alphabet::{add_char_with_shift, subtract_char_with_shift},
-    cipher::Cipher,
-};
+use crate::utils::{alphabet::shift_char, cipher::Cipher};
 
 struct Caesar {
     key: u8,
@@ -20,7 +17,7 @@ impl Cipher for Caesar {
     fn encrypt(&self, text: &str) -> String {
         let mut result = String::new();
         for c in text.chars() {
-            result.push(add_char_with_shift(c, self.key as usize));
+            result.push(shift_char(c, |pos| pos + (self.key as usize)));
         }
         result
     }
@@ -28,7 +25,7 @@ impl Cipher for Caesar {
     fn decrypt(&self, text: &str) -> String {
         let mut result = String::new();
         for c in text.chars() {
-            result.push(subtract_char_with_shift(c, |pos| pos - (self.key as usize)));
+            result.push(shift_char(c, |pos| pos - (self.key as usize)));
         }
 
         result
