@@ -1,4 +1,4 @@
-use crate::utils::alphabet::{add_char, is_clean, repeat_key};
+use crate::utils::alphabet::{add_char, is_clean, repeat_key, subtract_char};
 use crate::utils::cipher::Cipher;
 
 struct Vigenere {
@@ -26,7 +26,12 @@ impl Cipher for Vigenere {
     }
 
     fn decrypt(&self, text: &str) -> String {
-        todo!()
+        let repeated_key = repeat_key(&text, &self.key);
+        let mut plain_text = String::new();
+        for (c, k) in text.chars().zip(repeated_key.chars()) {
+            plain_text.push(subtract_char(c, k));
+        }
+        plain_text
     }
 }
 
